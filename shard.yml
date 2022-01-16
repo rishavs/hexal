@@ -1,0 +1,11 @@
+name: hexal
+version: 0.1.0
+
+authors:
+    - Rishav Sharan <rishav.sharan@live.com>
+
+targets:
+    hexal:
+        main: src/hexal.cr
+
+license: MIT
