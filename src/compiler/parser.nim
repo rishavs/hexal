@@ -1,8 +1,14 @@
-import std/[strutils, strformat, times, options, sequtils]
+import std/[strutils, strformat, times, options, sequtils, times]
 
 var source* : string
 
 type 
+    ParseObject = object
+        isSuccessful: bool
+        expected    : string
+        actual      : seq[string]
+        duration    : Duration
+
     Parser =
         proc(code:string): seq[string]
 
@@ -32,13 +38,7 @@ type
         args*: seq[string]
         children*: seq[NodeObj]
  
-    ParseObject = object
-        success     : bool
-        lines       : int
-        pos         : int
-        errors      : seq[string]
-        remaining   : string
-        output      : seq[string]
+
 
     ParseError* = object
         kind*       : string
