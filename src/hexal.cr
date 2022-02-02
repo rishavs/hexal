@@ -20,4 +20,25 @@ module Hexal
     # # execute this if an exception isn't raised
     end
 
+
+    class Parser 
+        def initialize(@str: String)
+            
+        end
+    end
+
+    class Success 
+        def initialize(@str: String)
+            
+        end
+    end
+
+    class Failure 
+        def initialize(@str: String)
+            
+        end
+    end
+
+    alias Result = Success | Failure
+
 end
