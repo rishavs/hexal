@@ -12,3 +12,4 @@ bin           = @["hexal"]
 # Dependencies
 
 requires "nim >= 1.6.2"
+requires "npeg >= 0.26.0"

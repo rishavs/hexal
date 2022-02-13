@@ -4,13 +4,15 @@ var source* : string
 
 type 
     ParseObject = object
+        kind       : string
         isSuccessful: bool
         expected    : string
-        actual      : seq[string]
-        duration    : Duration
+        actual      : string
+        atPosition  : int
+        atLine      : int
 
     Parser =
-        proc(code:string): seq[string]
+        proc(): ParseObject
 
     IParser =
         proc(): Option[seq[string]]
@@ -62,67 +64,7 @@ type
         parseDuration*  : Duration
         linesCompiled*  : int
 
-proc s(c: char) : Parser  =
-    return (
-        proc(code:string): seq[string] =
-            var remaining = code
-            var res = ""
-            if remaining.startsWith c:
-                remaining.removePrefix c
-                res = $c
-
-            return @[remaining, res]
-    )
-
-proc s(frag: string) : Parser  =
-    return (
-        proc(code:string): seq[string] =
-            var remaining = code
-            var res = ""
-            if remaining.startsWith frag:
-                remaining.removePrefix frag
-                res = frag
-
-            return @[remaining, res]
-    )
-
-proc `|` (l: Parser, r: Parser) : Parser =
-    return (
-        proc(code:string): seq[string] =
-            var lOut = l(code)
-            if lOut[0].len > 0:
-                return lOut
-            else:
-                var rOut = r(code)
-                if rOut[0].len > 0:
-                    return rOut
-
-            return @[code, ""]
-    )
-
-proc `&` (l: Parser, r: Parser) : Parser =
-    return (
-        proc(code:string): seq[string] =
-            var lOut = l(code)
-            if lOut[1].len == 0:
-                echo "NOT Matched L"
-                return @[code, ""]
-            else:
-                echo "Matched L"
-                var rOut = r(lOut[0])
-                if rOut[1].len == 0:
-                    echo "Not Matched R"
-                    return @[code, ""]
-                else:
-                    echo "Matched L & R"
-                    return @[rOut[0], lOut[1], rOut[1]]
-    )
-
-proc yellError (nodeName: string) : Parser  =
-    return (
-        proc(code:string): seq[string] =
-            return @[nodeName, "Error on node type XXX"]    )
-
+# We don't need the parsers to return anything other than a true. only in case of failure do we need to return a full error object
 proc parse* (code: string) : void =
 
     # start timer
@@ -134,17 +76,85 @@ proc parse* (code: string) : void =
     var errors      : seq[ParseError]
     var output      : seq[string]
 
-    proc s(c: char) : IParser  =
+    proc eof() : Parser  =
         return (
-            proc(): Option[seq[string]] =
-                if remaining.startsWith c:
-                    echo fmt"Matched {c}"
-                    remaining.delete(0..0)
-                    inc pos
-                    return some(@[$c])
+            proc(): ParseObject =
+                var pOut = ParseObject(
+                    kind : "eof",
+                    isSuccessful: false,
+                    expected: "",
+                )
+                if remaining.len == pos:
+                    pOut.isSuccessful = true
+                    pOut.actual = "EOF"
                 else:
-                    return none(seq[string]) 
+                    pOut.actual = remaining[pos..^1]
+
+                return pOut
         )
+
+    proc s(c: char) : Parser  =
+        return (
+            proc(): ParseObject =
+                # echo "starting = ", remaining[pos..^1]
+
+                var newPos : int
+                var pOut = ParseObject(
+                    kind : "s-char",
+                    isSuccessful: false,
+                    expected: $c,
+                    actual : "EOF",
+                    atPosition: pos
+                )
+                if c == '\n':
+                    inc lines
+
+                if remaining.len > pos:
+
+                    if remaining[pos] == c:
+                        # echo fmt"Matched {c}"
+                        inc pos
+
+                        pOut.isSuccessful = true
+                        pOut.actual = $c
+                    else:
+                        pOut.isSuccessful = false
+                        pOut.actual = $remaining[pos]
+                    # echo pOut
+                    # echo "remaining = ", remaining[pos..^1]
+                    # echo "----------------------"
+                pOut.atPosition = pos
+                pOut.atLine = lines
+                return pOut
+        )
+    # proc s(frag: string) : Parser  =
+    #     return (
+    #         proc(): ParseObject =
+    #             echo "starting = ", remaining[pos..^1]
+
+    #             var newPos : int
+    #             var pOut = ParseObject(
+    #                 kind : "s-str",
+    #                 isSuccessful: false,
+    #                 expected: frag,
+    #                 actual : "EOF"
+    #             )
+    #             if remaining.len > pos:
+    #                 newPos = pos + frag.len
+    #                 if remaining.continuesWith(frag, pos):
+    #                     echo fmt"Matched {frag}"
+    #                     pos = newPos
+
+    #                     pOut.isSuccessful = true
+    #                     pOut.actual = frag
+    #                 else:
+    #                     pOut.isSuccessful = false
+    #                     pOut.actual = remaining[pos..newPos - 1]
+    #                 echo pOut
+    #                 echo "remaining = ", remaining[pos..^1]
+    #                 echo "----------------------"
+    #             return pOut
+    #     )
 
     proc no(c: char) : IParser  =
         return (
@@ -160,105 +170,269 @@ proc parse* (code: string) : void =
                     return some(@[res])
         )
 
-    proc `|` (lSide: IParser, rSide: IParser) : IParser =
+    proc `|` (lSide: Parser, rSide: Parser) : Parser =
         return (
-            proc(): Option[seq[string]] =
-                var lOut: Option[seq[string]] = lSide()
-                if lOut.isSome:
-                    return lOut
+            proc(): ParseObject =
+                var pOut = ParseObject(
+                    kind : "|",
+                    isSuccessful: false,
+                )
+                var lOut: ParseObject = lSide()
+                if lOut.isSuccessful:
+                    pOut.expected = lOut.expected
+                    pOut.isSuccessful = true
+                    pOut.actual.add lOut.actual
                 else:
-                    var rOut: Option[seq[string]] = rSide()
-                    if rOut.isSome:
-                        return rOut
-
-                return none(seq[string])
-        )
-
-    proc `&` (lSide: IParser, rSide: IParser) : IParser =
-        return (
-            proc(): Option[seq[string]] =
-                var lOut = lSide()
-                if lOut.isNone:
-                    return none(seq[string])
-                else:
-                    var rOut = rSide()
-                    if rOut.isNone:
-                        return none(seq[string])
+                    var rOut: ParseObject = rSide()
+                    if rOut.isSuccessful:
+                        pOut.expected = rOut.expected
+                        pOut.isSuccessful = true
+                        pOut.actual.add rOut.actual
                     else:
-                        return some (lOut.get & rOut.get)
+                        pOut.expected = lOut.expected & " | " & rOut.expected
+                        pOut.isSuccessful = false
+                        pOut.actual.add lOut.actual
+                        pOut.atLine = lOut.atLine
+                        pOut.atPosition = lOut.atPosition
+
+                return pOut
         )
+
+    proc `&` (lSide: Parser, rSide: Parser) : Parser =
+        return (
+            proc(): ParseObject =
+                var pOut = ParseObject(
+                    kind : "&",
+                    isSuccessful: false,
+                )
+                var lOut: ParseObject = lSide()
+                if not lOut.isSuccessful:
+                    pOut.expected = lOut.expected
+                    pOut.isSuccessful = false
+                    pOut.actual.add lOut.actual
+                    pOut.atLine = lOut.atLine
+                    pOut.atPosition = lOut.atPosition
+
+                else:
+                    var rOut: ParseObject = rSide()
+                    if not rOut.isSuccessful:
+                        pOut.expected = rOut.expected
+                        pOut.isSuccessful = false
+                        pOut.actual.add rOut.actual
+                        pOut.atLine = rOut.atLine
+                        pOut.atPosition = rOut.atPosition
+                    else:
+                        pOut.isSuccessful = true
+                        pOut.expected = lOut.expected & rOut.expected
+                        pOut.actual.add lOut.actual & rOut.actual
+                        
+                return pOut
+
+        )
+    # proc `&` (lSide: IParser, rSide: IParser) : IParser =
+    #     return (
+    #         proc(): Option[seq[string]] =
+    #             var lOut = lSide()
+    #             if lOut.isNone:
+    #                 return none(seq[string])
+    #             else:
+    #                 var rOut = rSide()
+    #                 if rOut.isNone:
+    #                     return none(seq[string])
+    #                 else:
+    #                     return some (lOut.get & rOut.get)
+    #     )
         
     # ZerOrMany
-    proc `*` (p: IParser) : IParser =
+    proc `*` (p: Parser) : Parser =
         return (
-            proc(): Option[seq[string]] =
-                var vals: seq[string] = @[]
+            proc(): ParseObject =
+                var pOut = ParseObject(
+                    kind : "*",
+                    isSuccessful: false,
+                )
+
                 while true:
                     result = p()
-                    if result.isNone:
-                        return some(vals)
+                    if not result.isSuccessful:
+                        pOut.isSuccessful = true
+                        pOut.expected = " ZeroOrMany(" & $result.expected & ")"
+                        return pOut
                     else:
-                        vals.add(result.get)           
+                        pOut.actual.add(result.actual)      
         )
-
-    # OneOrMany
-    proc `+` (p: IParser) : IParser =
-        return (
-            proc(): Option[seq[string]] =
-                var vals: seq[string] = @[]
-                while true:
-                    result = p()
-                    if result.isNone:
-                        if vals.len == 0:
-                            return none(seq[string])
-                        else:
-                            return some(vals)
-                    else:
-                        vals.add(result.get)           
-        )
-
-    # ZeroOrOne
-    # proc `?` (p: IParser) : IParser =
+    # proc `*` (p: IParser) : IParser =
     #     return (
     #         proc(): Option[seq[string]] =
     #             var vals: seq[string] = @[]
     #             while true:
     #                 result = p()
     #                 if result.isNone:
-    #                     if vals.len > 0:
+    #                     return some(vals)
+    #                 else:
+    #                     vals.add(result.get)           
+    #     )
+
+    # OneOrMany
+    proc `+` (p: Parser) : Parser =
+        return (
+            proc(): ParseObject =
+                var pOut = ParseObject(
+                    kind : "+",
+                    isSuccessful: false,
+                )
+                var successCount = 0
+
+                while true:
+                    result = p()
+                    pOut.expected = " OneOrMany(" & $result.expected & ")"
+                    pOut.actual = $result.actual
+                    if not result.isSuccessful:
+                        if successCount == 0:
+                            pOut.isSuccessful = false
+                            return pOut
+                        else:
+                            pOut.isSuccessful = true
+                            return pOut
+                    else:
+                        inc successCount
+                        pOut.actual.add(result.actual)     
+        )
+    # proc `+` (p: IParser) : IParser =
+    #     return (
+    #         proc(): Option[seq[string]] =
+    #             var vals: seq[string] = @[]
+    #             while true:
+    #                 result = p()
+    #                 if result.isNone:
+    #                     if vals.len == 0:
     #                         return none(seq[string])
     #                     else:
     #                         return some(vals)
     #                 else:
-    #                     vals.add(result.get)       
+    #                     vals.add(result.get)           
+    #     )
+
+    # ZeroOrOne
+    proc `?` (p: Parser) : Parser =
+        return (
+            proc(): ParseObject =
+                var pOut = ParseObject(
+                    kind: "?",
+                    isSuccessful: false,
+                )
+                result = p()
+                pOut.expected = " ZeroOrOne(" & $result.expected & ")"
+
+                if result.isSuccessful:
+                    pOut.isSuccessful = true
+                else:
+                    pOut.isSuccessful = true
+
+                return pOut   
+        )
+    # proc `?` (p: IParser) : IParser =
+    #     return (
+    #         proc(): Option[seq[string]] =
+    #             var vals: seq[string] = @[]
+    #             result = p()
+    #             if result.isNone:
+    #                 if vals.len > 0:
+    #                     return none(seq[string])
+    #                 else:
+    #                     return some(vals)
+    #             else:
+    #                 vals.add(result.get)       
     #     )
 
     #  NOT Parser -  TODO? do this or stick with NOT char?
-    # proc `!` (p: IParser) : IParser =
-    #     return (
-    #         proc(): Option[seq[string]] =
-    #             var vals: seq[string] 
-    #             while true:
-    #                 result = p()
-    #                 if result.isNone:
-    #                     vals.add(result.get)     
-    #                 else:
-    #                     return some(vals)      
-    #     )
+    # every parse fail is success for NOT
+    # the first parse success is a failure for NOT
+    proc `!` (p: Parser) : Parser =
+        return (
+            proc(): ParseObject =
+                var pOut = ParseObject(
+                    kind: "!",
+                    isSuccessful: false,
+                )
 
-    echo "about to parse"
-    remaining = "constx = 1"
-    let ws = *s(' ')
-    let var_kwd = s('v') & s('a') & s('r') & ws
-    let const_kwd = s('c') & s('o') & s('n') & s('s') & s('t') & ws 
-    let comb = var_kwd | const_kwd
-    echo comb().get
-    echo pos, remaining
+                while true:
+                    result = p()
+                    if result.isSuccessful:
+                        pOut.isSuccessful = true
+                        pOut.expected = " NOT(" & $result.expected & ")"
+                        return pOut
+                    else:
+                        pOut.actual.add(result.actual)      
+                        pos = pos + result.expected.len
+        )
 
-    remaining = "{ something goes in here } "
-    let txt = s('{') & *(no('}')) & s('}')
-    echo txt().get
-    echo pos, remaining
+    remaining = "hello world"
+    var str = s('h') & s('e') & s('l') & s('l') & s('o') & (s('w') | s(' ')) & s('w') & s('o') & s('r') & s('l') & s('d')
+    echo "remaining = ",  remaining[pos .. ^1]
+    echo str()
+
+    # remaining = "hello world"
+    # pos = 0
+    # # var chckOr = s("hello") & s(' ') & s("world")
+    # var chckOr = (s("hi") | (s("hel") & (s("lox") | s("lo")))) & s(' ') & s("world")
+    # # echo "remaining = ",  remaining[pos .. ^1]
+    # var sTime = getTime()
+    # echo chckOr()
+    # echo "Duration = ", getTime() - sTime
+
+    # remaining = "helloooxx world"
+    # pos = 0
+    # # var chckOr = s("hello") & s(' ') & s("world")
+    # var chckZOrM = s("hell") & *s('o') & *s('x') & *s('y') & *s(' ') & s("world")
+    # # echo "remaining = ",  remaining[pos .. ^1]
+    # var sTime2 = getTime()
+    # var result = chckZOrM()
+    # echo "Duration = ", getTime() - sTime2
+    # echo result
+
+    # remaining = "xxxx"
+    # pos = 0
+
+    # var chkEOF = s("xxxx") & eof()
+    # var sTime3 = getTime()
+    # var result = chkEOF()
+    # echo "Duration = ", getTime() - sTime3
+    # echo result
+
+    # remaining = "{ xxxx}"
+    # pos = 0
+    # var chckOOrM =  s('{') & ! (s('}') | s('@')) & s('}')
+    # # echo "remaining = ",  remaining[pos .. ^1]
+    # var sTime4 = getTime()
+    # var result4 = chckOOrM()
+    # echo "Duration = ", getTime() - sTime4
+    # echo result4
+
+    # remaining = "hello world"
+    # pos = 0
+    # # var chckOr = s("hello") & s(' ') & s("world")
+    # # var chckOOrM =  s("hello") & s(' ') & s("world")
+    # # echo "remaining = ",  remaining[pos .. ^1]
+    # var sTime3 = getTime()
+    # var result = chckOOrM()
+    # echo "Duration = ", getTime() - sTime3
+    # echo result
+
+
+    # echo "about to parse"
+    # remaining = "constx = 1"
+    # let ws = *s(' ')
+    # let var_kwd = s('v') & s('a') & s('r') & ws
+    # let const_kwd = s('c') & s('o') & s('n') & s('s') & s('t') & ws 
+    # let comb = var_kwd | const_kwd
+    # echo comb().get
+    # echo pos, remaining
+
+    # remaining = "{ something goes in here } "
+    # let txt = s('{') & *(no('}')) & s('}')
+    # echo txt().get
+    # echo pos, remaining
 
     # remaining = "bar"
     # let chk0or1 = ?((s('f') & s('o') & s('o')) & s('b')) & s('a') & s('r')
@@ -277,3 +451,52 @@ proc parse* (code: string) : void =
 # echo VAR_DECL(txt)
 # echo CONST_DECL(txt)
 # echo parser(txt)
+
+# import std/[strutils, unicode]
+
+# var str = """
+# 012
+# 345
+# 678
+# 9ab
+# """
+
+# echo str[0], str[14]
+# echo str.len
+
+# var pos = str.len - 4
+# var line = 4
+
+# var errLineType = "cur"
+# var curLineText: string
+# var prevLineText: string
+# var lastLineText: string
+
+# var chkPos = pos
+# var chkChar : char
+
+# while chkPos >= 0 :
+#   chkChar = str[chkPos]
+  
+#   case errLineType:
+#     of "cur":
+#       if chkChar == '\n':
+#         errLineType = "prev"
+#       else:   
+#         curLineText.add chkChar
+#     of "prev":
+#       if chkChar == '\n':
+#         errLineType = "last"
+#       else:  
+#         prevLineText.add chkChar
+#     of "last":
+#       if chkChar == '\n':
+#         break
+#       else:  
+#         lastLineText.add chkChar
+  
+#   dec chkPos
+  
+# echo "|", line - 2, ": ",reversed lastLineText
+# echo "|", line - 1, ": ", reversed prevLineText
+# echo "|", line, ": ", reversed curLineText
