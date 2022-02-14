@@ -1,7 +1,7 @@
 import std/[strutils, strformat, times, options, sequtils, times]
 
 type
-    Parser* = proc(): bool
+    Parser* = proc(): string
     
     ParseError* = object
         kind*           : string
@@ -32,7 +32,7 @@ proc parse* (code: string) : void =
     # should err always return true? that way we may get free backtracking?
     proc curse(str: string) : Parser =
         return (
-            proc(): bool =
+            proc(): string =
                 var err = ParseError(
                     kind: "SyntaxError", 
                     expected: "", 
@@ -44,101 +44,114 @@ proc parse* (code: string) : void =
                     endPos: pos
                 )
 
-                errors.add(err)
-                return true
+                errors.add err
+                return ""
         )
 
-    proc eof() : Parser  =
-        return (
-            proc(): bool =
-                if pos > remaining.len :
-                    return true
-                else:
-                    return false
-
-        )
     proc c(c: char) : Parser  =
         return (
-            proc(): bool =
+            proc(): string =
                 if c == '\n':
                     inc line
                 
                 if c == remaining[pos]:
                     inc pos
-                    return true
+                    return $c
                 else:
-                    return false
+                    return ""
 
         )
     proc `~`(c: char) : Parser  =
         return (
-            proc(): bool =
+            proc(): string =
+                var res : string
+
                 while true:
                     if c == '\n':
                         inc line
                     
                     if c == remaining[pos]:
-                        return true
+                        return res
                     else:
                         inc pos
+                        res.add c
         )
     
     proc `&` (lp: Parser, rp: Parser): Parser =
         return (
-            proc(): bool =
-                if lp() and rp():
-                    return true
+            proc(): string =
+                var lpOut = lp()
+                if lpOut.len == 0:
+                    return ""
                 else:
-                    return false
+                    var rpOut = rp()
+                    if rpOut.len == 0:
+                        return ""
+                    else:
+                        return lpOut & rpOut
         )
 
     proc `|` (lp: Parser, rp: Parser): Parser =
         return (
-            proc(): bool =
-                if lp() or rp():
-                    return true
+            proc(): string =
+                var lpOut = lp()
+                if lpOut.len > 0:
+                    return lpOut
                 else:
-                    return false
+                    var rpOut = rp()
+                    if rpOut.len > 0:
+                        return rpOut
+                    else:
+                        return ""
         )
 
 
     # Zero or Many - always true
     proc `*` (p: Parser) : Parser =
         return (
-            proc(): bool =
+            proc(): string =
                 while true:
-                    if not p():
-                        return true
+                    var res : string
+                    var pOut = p()
+                    if pOut.len == 0:
+                        return res
+                    else:
+                        res.add pOut
+
         )
 
     # One or Many - fails when zero
     proc `+` (p: Parser) : Parser =
         return (
-            proc(): bool =
+            proc(): string =
                 var atLeastOne = false
                 while true:
-                    if p():
+                    var res : string
+                    var pOut = p()
+                    if pOut.len > 0:
                         atLeastOne = true
+                        res.add pOut
                     else:
                         if atLeastOne:
-                            return true
+                            return res
                         else:
-                            return false
+                            return ""
         )
 
     # Zero or One - always true.
     proc `?` (p: Parser) : Parser =
         return (
-            proc(): bool =
-                if p():
-                    return true
+            proc(): string =
+                var pOut = p()
+                if pOut.len > 0:
+                    return pOut
                 else:
-                    return true
+                    return ""
         )
 
 
     remaining = """
-    conQst  x   = " something.!"
+const  x   = " something.!"
     """
     echo "starting string = ", remaining
     let ws = + c(' ')
@@ -149,6 +162,8 @@ proc parse* (code: string) : void =
     let chk = ws & ? declr & c('x') & ws & c('=') & ws & str
     echo chk()
     echo "ending string = ", remaining[pos.. ^1]
+    let test = c('c') & c('o') & c('n') & c('s') & c('t')
+    echo test()
     echo errors
     
 

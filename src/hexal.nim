@@ -1,5 +1,5 @@
 import std/[parseopt, rdstdin]
-import compiler/charparser
+import compiler/parser
 
 var opts = initOptParser()
 var args : seq[string]
