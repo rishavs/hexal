@@ -84,15 +84,36 @@ proc parse* (code: string) : void =
 
                 none(string)
         )
+    proc eos() : Parser =
+        return (
+            proc(): Option[string] =
+                if pos == remaining.len - 1: 
+                    echo "FOUND EOF"
+                    return some("EOF")
+                else:
+                    echo "Did not find EOF"
+                    return none(string)
+        )
 
     proc c(c: char) : Parser  =
         return (
             proc(): Option[string] =
-                if remaining[pos] == c:
+                if pos < remaining.len and remaining[pos] == c:
                     inc pos
                     return some($c)
                 else:
                     return none(string)
+
+                # if remaining[pos] == c:
+                #     echo "Matched ", $c, " with ", remaining[pos] , " at pos ", pos
+                #     if pos < remaining.len: 
+                #         echo "incrementing pos"
+                #         inc pos
+                #     else:
+                #         return none(string)
+                #     return some($c)
+                # else:
+                #     return none(string)
         )
         
     # NOT - Anything but the given parser - always true.
@@ -164,9 +185,12 @@ proc parse* (code: string) : void =
                 while true:
                     let pOut = p()
                     if pOut.isSome():
+                        echo "* received ", pOut.get()
                         res.add pOut.get()
+                        echo "* has res: ", res
                     else:
-                        return some(res)
+                        break
+                return some(res)
         )
 
     # One or more repetitions of the given parser - if zero instances of succes, it returns failure. Esle returns success
@@ -182,10 +206,11 @@ proc parse* (code: string) : void =
                         atLeastOne = true
                         res.add pOut.get()
                     else:
-                        if atLeastOne:
-                            return some(res)
-                        else:
-                            return none(string)
+                        break
+                if atLeastOne:
+                    return some(res)
+                else:
+                    return none(string)
         )
 
     # Zero or One - always true.
@@ -217,9 +242,9 @@ proc parse* (code: string) : void =
     let varKwd = c('v') & c('a') & c('r')
     let constKwd = c('c') & c('o') & c('n') & c('s') & c('t')
 
-    let identifier = (alphabet & * ( alphanum | c('_'))) - (varKwd | constKwd | boolDef)
+    let identifier = (alphabet & *(alphanum | c('_'))) - (varKwd | constKwd)
 
-    remaining = "somename"
+    remaining = "xconst"
     pos = 0
     let resIdent = identifier()
     if resIdent.isSome():
@@ -227,7 +252,8 @@ proc parse* (code: string) : void =
         echo resIdent.get()
     else:
         echo "Failure"
-
+    echo "Ending string = ",  remaining[pos .. ^1]
+    echo "----------------"
 
 
     # let declaration = const_decl | var_decl
@@ -253,3 +279,4 @@ proc parse* (code: string) : void =
     echo "Ending string = ",  remaining[pos .. ^1]
     echo "Time taken = ",  getTime() - parseStartTime
     echo "Errors = ",  errors
+    echo "----------------"
