@@ -99,6 +99,7 @@ proc parse* (code: string) : void =
         return (
             proc(): Option[string] =
                 if pos < remaining.len and remaining[pos] == c:
+                    if remaining[pos] == '\n': inc line
                     inc pos
                     return some($c)
                 else:
@@ -130,6 +131,7 @@ proc parse* (code: string) : void =
 
         )
 
+    
     proc `|` (lp: Parser, rp: Parser) : Parser =
         return (
             proc(): Option[string] =
@@ -164,15 +166,15 @@ proc parse* (code: string) : void =
             proc(): Option[string] =
                 let rpOut = rp()
                 if rpOut.isSome:
-                    echo "Right side was successful. This is wrong."
+                    # echo "Right side was successful. This is wrong."
                     return none(string)
                 else:
                     let lpOut = lp()
                     if lpOut.isSome():
-                        echo "left side was successful"
+                        # echo "left side was successful"
                         return lpOut
                     else:
-                        echo "both sides were unsuccessful"
+                        # echo "both sides were unsuccessful"
                         return none(string)
 
         )
@@ -185,9 +187,9 @@ proc parse* (code: string) : void =
                 while true:
                     let pOut = p()
                     if pOut.isSome():
-                        echo "* received ", pOut.get()
+                        # echo "* received ", pOut.get()
                         res.add pOut.get()
-                        echo "* has res: ", res
+                        # echo "* has res: ", res
                     else:
                         break
                 return some(res)
@@ -223,6 +225,21 @@ proc parse* (code: string) : void =
                 else:
                     return none(string)
         )
+    
+    #  Not-predicate: !P
+    # The pattern !P returns a pattern that matches only if the input does not match P. In contrast to most other patterns, this pattern does not consume any input.
+    proc `!` (p: Parser) : Parser =
+        return (
+            proc(): Option[string] =
+                let pOut = p()
+                if pOut.isNone():
+                    return some("")
+                else:
+                    return none(string)
+        )
+
+    let space = c(' ') | c('\t') | c('\r')
+    let ws = space | c('\n')
 
     let lowerChar = c('a') | c('b') | c('c') | c('d') | c('e') | c('f') | c('g') | c('h') | c('i') | c('j') | c('k') | c('l') | c('m') | c('n') | c('o') | c('p') | c('q') | c('r') | c('s') | c('t') | c('u') | c('v') | c('w') | c('x') | c('y') | c('z')
 
@@ -231,6 +248,7 @@ proc parse* (code: string) : void =
     let alphabet = lowerChar | upperChar
 
     let digit = c('0') | c('1') | c('2') | c('3') | c('4') | c('5') | c('6') | c('7') | c('8') | c('9')
+    let nonZeroDigit = c('1') | c('2') | c('3') | c('4') | c('5') | c('6') | c('7') | c('8') | c('9')
 
     let alphanum = alphabet | digit
 
@@ -238,11 +256,62 @@ proc parse* (code: string) : void =
     let falseKwd = c('f') & c('a') & c('l') & c('s') & c('e')
 
     let boolDef =  trueKwd | falseKwd
+    let intDef = ?c('-') & nonZeroDigit & * (digit | c('_'))
+    let decDef = ?c('-') & digit & * (digit | c('_')) & c('.') & * (digit | c('_'))
 
-    let varKwd = c('v') & c('a') & c('r')
-    let constKwd = c('c') & c('o') & c('n') & c('s') & c('t')
+    let literals = intDef | boolDef
 
-    let identifier = (alphabet & *(alphanum | c('_'))) - (varKwd | constKwd)
+    let equalTok = c('=') & *ws
+    let colonTok = c(':') & *ws
+    let orTok = c('|') & *ws
+
+
+    let varKwd = c('v') & c('a') & c('r') & +ws
+    let constKwd = c('c') & c('o') & c('n') & c('s') & c('t') & +ws
+    let intTypeKwd = c('I') & c('n') & c('t')
+    let boolTypeKwd = c('B') & c('o') & c('o') & c('l')
+    let decTypeKwd = c('D') & c('e') & c('c')
+    let voidTypeKwd = c('D') & c('e') & c('c')
+    let keywords = varKwd | constKwd | boolDef | intTypeKwd | boolTypeKwd | decTypeKwd
+
+    let identifierRule = alphabet & *(alphanum | c('_'))
+    let identifier = (identifierRule - keywords) & *ws
+    let primitiveType =  boolTypeKwd | decTypeKwd | intTypeKwd
+    let sumType = primitiveType & * (orTok & primitiveType)
+    let typedIdentifier = identifier & colonTok & sumType
+
+    let expression = literals | identifier
+
+    let varDeclareAndAssign = varKwd & typedIdentifier & equalTok & expression
+    let statement = varDeclareAndAssign #| varDeclaration | assignment
+
+    let program = * statement 
+
+    # var x = 1
+    # const y = 2
+    # var a, b, c = 1, 2, 3
+    # var a : Int, b: Bool, c = 1, true, 3
+    # var 
+        # a, b, c : Int = 1, 2, 3
+    # var 
+        # a : Int,
+        # b : String
+
+    # var d: Int = 1
+    # const e: Int = 1
+    # let mutable x : Int = 1
+    # let mutable str : String = mutable "Hello"
+    # c, f - it is taking all keyward starting letters
+    remaining = "vxe"
+    pos = 0
+    let resProg = identifier()
+    if resProg.isSome():
+        echo "Success"
+        echo resProg.get()
+    else:
+        echo "Failure"
+    echo "Ending string = ",  remaining[pos .. ^1]
+    echo "----------------"
 
     remaining = "xconst"
     pos = 0
@@ -256,11 +325,6 @@ proc parse* (code: string) : void =
     echo "----------------"
 
 
-    # let declaration = const_decl | var_decl
-
-    # let statement = declareAndAssign | declaration | assignment | printStmt
-
-    # let program = * statement 
 
 
     remaining = "const  x = {something}"
