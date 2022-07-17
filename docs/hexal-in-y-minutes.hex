@@ -30,12 +30,29 @@
 -- Double dashes like this will give a single-line comment.
 
 
-var a1
 a1 = 10     -- We can also add comments within lines like this.
 
-var a2 = 10
-var a3: Int = 30
+a2 = 10
+a3: Int = 30
 
-var a4, a5 = 40, 50  -- Hexal allows for multiple returns and multiple assignments
+a4, a5 = 40, 50  -- Hexal allows for multiple returns and multiple assignments
 
-const b1: Bool = true
+b1: Bool = true
+
+b2 = fn (a: INt, b: Int) -> Int {
+    return a + b
+}
+
+b3 = class {
+    b4 = 10
+    b5: Bool
+    @new = fn () -> {
+    
+    }
+    b6 = fn (isTrue: Bool) -> Bool {
+        return true
+    }
+}
+
+
+
