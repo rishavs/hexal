@@ -46,7 +46,7 @@ b2 = fn (a: INt, b: Int) -> Int {
 b3 = class {
     b4 = 10
     b5: Bool
-    @new = fn () -> {
+    @new = fn {
     
     }
     b6 = fn (isTrue: Bool) -> Bool {
@@ -54,5 +54,5 @@ b3 = class {
     }
 }
 
-
-
+c1: [String] = ["abc", "pqr", "this is a 1 indexed array!"]
+c2: [String, Int] = ["a": 1, "b": 2, "c" = 3]
