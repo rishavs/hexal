@@ -1,11 +1,19 @@
 name: hexal
 version: 0.1.0
 
-authors:
-    - Rishav Sharan <rishav.sharan@live.com>
+# authors:
+#   - name <email@example.com>
 
-targets:
-    hexal:
-        main: src/hexal.cr
+# description: |
+#   Short description of hexal
 
-license: MIT
+# dependencies:
+#   pg:
+#     github: will/crystal-pg
+#     version: "~> 0.5"
+
+# development_dependencies:
+#   webmock:
+#     github: manastech/webmock.cr
+
+# license: MIT
