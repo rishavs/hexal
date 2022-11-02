@@ -1,11 +1,38 @@
 module Hexal
-    # struct Token
-    #     getter kind : Symbol
-    #     getter value : String
+    keywords = {
+        # Keywords
+        "const "    => :CONST_DEF,
+        "var "      => :VAR_DEF,
+        "type "     => :TYPE_DEF,
 
-    #     def initialize (@kind, @value)
-    #     end
-    # end
+        # Builtins
+        "Int"       => :INT_TYPE,
+        "Bool"      => :BOOL_TYPE,
+        "true"      => :TRUE_LIT,
+        "false"     => :FALSE_LIT,
+        "Str"       => :STR_TYPE,
+        "Char"      => :CHAR_TYPE,
+        "Void"      => :VOID_TYPE
+    }
+    
+    # Operators
+    operators = {
+        "="         => :ASSIGN,
+        "=="        => :EQUALS,
+        "!="        => :NOTEQUALS,
+        "!"         => :NOT,
+        "|"         => :OR,
+        "&"         => :AND,
+        "+"         => :PLUS,
+        "-"         => :MINUS,
+        "*"         => :MULT,
+        "/"         => :DIV,
+        "("         => :BRACKETSTART,
+        ")"         => :BRACKETEND,
+        "```"       => :TRIPTICK,
+        "`"         => :BACKTICK,
+        "'"         => :SINQUOTE
+    }
 
 
     alias Token = Tuple(Symbol, String)
