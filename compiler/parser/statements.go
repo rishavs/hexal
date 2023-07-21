@@ -23,9 +23,18 @@ func (ctx *ParsingContext) parseStatements() HxNode {
 				res.Resolved = true
 				res.Children = append(res.Children, stmt)
 			}
+		case "VAR_KWD":
+			ctx.Pos++
+			stmt = ctx.parseVarDeclrStmt()
+			if stmt.Resolved {
+				res.Resolved = true
+				res.Children = append(res.Children, stmt)
+			}
 		default:
 			panic("Unexpected token. Expected Statement.")
 		}
+
+		// Add check here. All statements should end with space or EOF
 	}
 	return res
 }
