@@ -61,6 +61,21 @@ func LexFile(src []byte) []HxToken {
 				}
 			}
 			tokens = append(tokens, HxToken{"SPACE", "", i, line})
+			// ----------------------------------------
+			// Handle Comments
+			// ----------------------------------------
+		} else if matches(&src, i, "--") {
+			tokens = append(tokens, HxToken{"COMMENT_START", "", i, line})
+			i += 2
+			for len(src) > i {
+				if !matches(&src, i, "--") {
+					i++
+				} else {
+					tokens = append(tokens, HxToken{"COMMENT_END", "", i, line})
+					i += 2
+					break
+				}
+			}
 
 			// ----------------------------------------
 			// Handle all Keywords
@@ -128,22 +143,6 @@ func LexFile(src []byte) []HxToken {
 		} else if matches(&src, i, "*") {
 			tokens = append(tokens, HxToken{"MULT_OPR", "", i, line})
 			i++
-
-			// ----------------------------------------
-			// Handle Comments
-			// ----------------------------------------
-		} else if matches(&src, i, "-/") {
-			tokens = append(tokens, HxToken{"COMMENT_START", "", i, line})
-			i += 2
-			for len(src) > i {
-				if !matches(&src, i, "/-") {
-					i++
-				} else {
-					tokens = append(tokens, HxToken{"COMMENT_END", "", i, line})
-					i += 2
-					break
-				}
-			}
 
 			// ----------------------------------------
 			// Handle Literals - BYTES
