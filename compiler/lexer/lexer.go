@@ -68,12 +68,16 @@ func LexFile(src []byte) []HxToken {
 			tokens = append(tokens, HxToken{"COMMENT_START", "", i, line})
 			i += 2
 			for len(src) > i {
-				if !matches(&src, i, "--") {
-					i++
-				} else {
+				if matches(&src, i, "--") {
 					tokens = append(tokens, HxToken{"COMMENT_END", "", i, line})
 					i += 2
 					break
+
+				} else if src[i] == '\n' {
+					i++
+					line++
+				} else {
+					i++
 				}
 			}
 

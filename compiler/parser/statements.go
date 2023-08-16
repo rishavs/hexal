@@ -1,6 +1,8 @@
 package parser
 
-import "fmt"
+import (
+	"hexal/compiler/presenter"
+)
 
 func (ctx *ParsingContext) parseStatements() HxNode {
 	var res HxNode
@@ -12,11 +14,9 @@ func (ctx *ParsingContext) parseStatements() HxNode {
 		case "SPACE":
 			ctx.Pos++
 		case "COMMENT_START":
-			fmt.Println("Comment started")
 			ctx.Pos++
-			fmt.Println(ctx.Tokens[ctx.Pos].Kind)
 			if ctx.Tokens[ctx.Pos].Kind != "COMMENT_END" {
-				panic("Comment started. But did not end")
+				presenter.Fail("SYNTAX_ERROR", "Comment started. But did not end", ctx.Tokens[ctx.Pos].Line, ctx.Tokens[ctx.Pos].Pos)
 			}
 			ctx.Pos++
 
