@@ -12,6 +12,7 @@ INCLUDES = -I$(HEADERS_FOLDER)
 SOURCE_FILES = \
 	compiler/errors.c \
 	compiler/types/dyn_string.c \
+	compiler/lexer.c \
 	compiler/transpiler.c
 # 	src/transpiler/helpers.c \
 # 	src/transpiler/context.c \

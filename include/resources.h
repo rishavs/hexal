@@ -40,7 +40,7 @@ typedef enum {
 } Error_resource;
 
 // Generate the string array using the macro
-static const char* en_us[RES_RESOURCE_COUNT] = {
+static char* en_us[RES_RESOURCE_COUNT] = {
     [RES_PROBLEM_AT]            = "Problem at %zu:%zu in the file \"%s\"",
     [RES_INTERNAL_PERROR]       = "Internal Note",
     [RES_INTERNAL_LOCATION]     = "Internal Note: Failed in the compiler code at line %zu in the file \"%s\"",
