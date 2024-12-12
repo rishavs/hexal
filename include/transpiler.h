@@ -35,6 +35,7 @@ int64_t list_of_errors_do_push(List_of_errors_t* list, Transpiler_error_t error)
 // Token structure
 typedef struct Token_t {
     Dyn_string_t kind;
+    Dyn_string_t value;
     int64_t pos;
     int64_t len;
     int64_t line;

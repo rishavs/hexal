@@ -60,7 +60,7 @@ void transpile_file(Transpiler_ctx_t* ctx){
     // print the tokens
     for (int i = 0; i < ctx->tokens.len; i++) {
         Token_t token = ctx->tokens.data[i];
-        printf("%s:%s\n", token.kind.data, dyn_string_do_get_substring(ctx->src, token.pos, token.len).data);
+        printf("%s:%s\n", token.kind.data, token.value.data);
     }
 
     // print the errors
