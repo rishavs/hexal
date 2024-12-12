@@ -1,6 +1,0 @@
---  Two dashes start a multi line comment. 
-    There are no single line comments as Haxel doesn't cares about spaces in general --
-  
-var xyz = 2.3
-
-var abc = true -- you can add comments inline --

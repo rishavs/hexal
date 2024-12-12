@@ -1,3 +1,0 @@
-package preprocessor
-
-// Symbol Table
