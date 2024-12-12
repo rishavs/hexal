@@ -16,27 +16,30 @@ int main() {\n\
 
 // Token structure
 typedef struct Token_t {
-    Dyn_string_t* kind;
+    Dyn_string_t kind;
     int64_t pos;
     int64_t len;
     int64_t line;
 } Token_t;
+typedef struct {
+    Token_t* data;
+    int64_t len;
+    int64_t capacity;
+} List_of_Tokens_t;
 
 
 typedef struct {
-    Dyn_string_t* filepath;
-    Dyn_string_t* src;
+    Dyn_string_t filepath;
+    Dyn_string_t src;
 
     // lexer
-    Token_t* tokens;
-    int64_t tokens_len;
-    int64_t tokens_capacity;
+    List_of_Tokens_t tokens;
     
     
     
     // codegen
-    Dyn_string_t* c_code;
-    Dyn_string_t* h_file;
+    Dyn_string_t c_code;
+    Dyn_string_t h_file;
     
     // char* src;
     // char* c_code;

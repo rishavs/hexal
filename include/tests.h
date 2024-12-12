@@ -6,7 +6,7 @@
 #include "dyn_string.h"
 
 typedef struct Test_Result {
-    Dyn_string_t* desc;
+    Dyn_string_t desc;
     bool passed;
 } Test_Result;
 

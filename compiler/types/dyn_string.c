@@ -12,46 +12,46 @@
 // and in the memory error handlers
 
 // Create a new dynamic string using the given fragment
-Dyn_string_t* dyn_string_do_init(char* string_literal) {
-    Dyn_string_t* str = calloc(1, sizeof(Dyn_string_t));
-    if (str == NULL) memory_allocation_failure(0, 0, NULL, __FILE__, __LINE__);
+Dyn_string_t dyn_string_do_init(char* string_literal) {
+    Dyn_string_t str;
+    
+    str.len = strlen(string_literal);
+    str.capacity = str.len + 1;
+    str.data = calloc(str.capacity, sizeof(char));
+    if (str.data == NULL) memory_allocation_failure(0, 0, NULL, __FILE__, __LINE__);
 
-    int64_t len = (int64_t)strlen(string_literal);
-    str->len = len;
-    str->capacity = len + 1;
-    str->data = calloc(str->capacity, sizeof(char));
-    if (str->data == NULL) memory_allocation_failure(0, 0, NULL, __FILE__, __LINE__);
+    strncpy(str.data, string_literal, str.len);
+    str.data[str.len] = '\0';
 
-    strncpy(str->data, string_literal, str->capacity);
     return str;
 }
 
-Dyn_string_t* dyn_string_do_format (Dyn_string_t* base_string, ...) {
-    va_list args;
+// Dyn_string_t* dyn_string_do_format (Dyn_string_t* base_string, ...) {
+//     va_list args;
 
-    // get the length of the formatted string
-    va_start(args, base_string);
-    size_t len = vsnprintf(NULL, 0, base_string->data, args) + 1;
-    va_end(args);
+//     // get the length of the formatted string
+//     va_start(args, base_string);
+//     size_t len = vsnprintf(NULL, 0, base_string->data, args) + 1;
+//     va_end(args);
 
-    // allocate memory for the formatted string
-    char* buffer = calloc(len, sizeof(char));
-    if (buffer == NULL) memory_allocation_failure(0, 0, NULL, __FILE__, __LINE__);
+//     // allocate memory for the formatted string
+//     char* buffer = calloc(len, sizeof(char));
+//     if (buffer == NULL) memory_allocation_failure(0, 0, NULL, __FILE__, __LINE__);
 
-    // format the string
-    va_start(args, base_string);
-    vsnprintf(buffer, len, base_string->data, args);
-    va_end(args);
+//     // format the string
+//     va_start(args, base_string);
+//     vsnprintf(buffer, len, base_string->data, args);
+//     va_end(args);
 
-    Dyn_string_t* formatted_string = calloc(1, sizeof(Dyn_string_t));
-    if (formatted_string == NULL) memory_allocation_failure(0, 0, NULL, __FILE__, __LINE__);
+//     Dyn_string_t* formatted_string = calloc(1, sizeof(Dyn_string_t));
+//     if (formatted_string == NULL) memory_allocation_failure(0, 0, NULL, __FILE__, __LINE__);
 
-    formatted_string->len = len - 1;
-    formatted_string->capacity = len;
-    formatted_string->data = buffer;
+//     formatted_string->len = len - 1;
+//     formatted_string->capacity = len;
+//     formatted_string->data = buffer;
 
-    return formatted_string;
-}
+//     return formatted_string;
+// }
     
 
 // Dyn_string_t* dyn_string_do_push(Dyn_string_t* str, char* frag) {

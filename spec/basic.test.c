@@ -25,6 +25,7 @@ Test_Result empty_passed_test() {
 
     return res;
 }
+
 Test_Result simple_var_declaration_as_int() {
     Test_Result res = { 
         .desc = dyn_string_do_init("simple var declaration as int"),

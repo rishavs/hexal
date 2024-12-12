@@ -11,7 +11,8 @@ typedef struct {
     int64_t len;
     int64_t capacity;
 } Dyn_string_t;
+typedef Dyn_string_t* Ref_to_Dyn_string_t; 
 
-Dyn_string_t* dyn_string_do_init(char* string_literal);
+Dyn_string_t dyn_string_do_init(char* string_literal);
 
 #endif // DYN_STRING_H

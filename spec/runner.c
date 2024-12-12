@@ -30,10 +30,10 @@ int main() {
     while (all_tests[i] != NULL) {
         Test_Result res = all_tests[i]();
         if (res.passed) {
-            printf("\033[0;32m%lli: \t[ PASSED ]\t%s\n\033[0m", i, res.desc->data); // Green color for PASS
+            printf("\033[0;32m%lli: \t[ PASSED ]\t%s\n\033[0m", i, res.desc.data); // Green color for PASS
             passed_count++;
         } else {
-            printf("\033[0;31m%lli:\t[ FAILED ]\t%s\n\033[0m", i, res.desc->data);
+            printf("\033[0;31m%lli:\t[ FAILED ]\t%s\n\033[0m", i, res.desc.data);
         }
         i++;
     }
