@@ -50,12 +50,11 @@ int64_t parse_identifier (Transpiler_ctx_t* ctx, int64_t* i) {
     return index;
 }
 
-
 int64_t parse_expression (Transpiler_ctx_t* ctx, int64_t* i) {
     // Get the current token
     Token_t token = ctx->tokens.data[*i];
 
-    if (dyn_string_do_compare(token.kind, dyn_string_do_init("number"))) {
+    if (dyn_string_do_compare(token.kind, dyn_string_do_init("integer"))) {
         return parse_integer(ctx, i);
     }
 
@@ -79,7 +78,7 @@ int64_t parse_declaration (Transpiler_ctx_t* ctx, int64_t* i) {
     // consume the "let" token
     (*i)++;
     token = ctx->tokens.data[*i];
-    if (!dyn_string_do_compare(token.kind, dyn_string_do_init("identifier"))) {
+    if (ctx->tokens.len <= *i) {
         parser_expected_syntax_error(ctx, dyn_string_do_init("identifier"), *i, dyn_string_do_init(__FILE__), __LINE__);
         return -1;
     }
@@ -91,8 +90,7 @@ int64_t parse_declaration (Transpiler_ctx_t* ctx, int64_t* i) {
     // consume the "=" token
     (*i)++;
     token = ctx->tokens.data[*i];
-    printf("DEBUG %s\n", token.kind.data);
-    if (!dyn_string_do_compare(token.kind, dyn_string_do_init("="))) {
+    if (ctx->tokens.len <= *i) {
         parser_expected_syntax_error(ctx, dyn_string_do_init("="), *i, dyn_string_do_init(__FILE__), __LINE__);
         return -1;
     }
@@ -156,7 +154,7 @@ List_of_ints_t parse_statements (Transpiler_ctx_t* ctx, int64_t* i) {
         } else {
             // if no statement found, raise error
             printf("Yo Yo! Expected statement, but found \"%s\". ", token.kind.data);
-            parser_expected_syntax_error(ctx, dyn_string_do_init("expression"), *i, dyn_string_do_init(__FILE__), __LINE__);
+            parser_expected_syntax_error(ctx, dyn_string_do_init("statement"), *i, dyn_string_do_init(__FILE__), __LINE__);
             recover_from_parsing_error(ctx, i);
         }
 

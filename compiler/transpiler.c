@@ -62,23 +62,27 @@ int64_t list_of_errors_do_push(List_of_errors_t* list, Transpiler_error_t error)
 void parser_expected_syntax_error(Transpiler_ctx_t* ctx, Dyn_string_t expected_syntax, int64_t at, Dyn_string_t transpiler_file, int64_t transpiler_line) {
     Token_t token = ctx->tokens.data[at];
 
-    Dyn_string_t expected = dyn_string_do_format(
-        dyn_string_do_init(en_us[RES_EXPECTED]), 
-        expected_syntax.data
-    );
     Dyn_string_t found;
     if (at >= ctx->tokens.len) {
         found = dyn_string_do_init(en_us[RES_REACHED_EOS]);
     } else {
-        found = dyn_string_do_format(
+        found = dyn_string_do_join(2,
             dyn_string_do_init(en_us[RES_FOUND_X]), 
-            token.value.data
+            token.value
         );
     }
-    printf("%s:%s\n", expected.data, found.data);
+
+    Dyn_string_t msg = dyn_string_do_join(5, 
+        dyn_string_do_init(en_us[RES_EXPECTED]), 
+        expected_syntax,
+        dyn_string_do_init(", "), 
+        found,
+        dyn_string_do_init(". ")
+    );
+    printf("%s\n", msg.data);
     Transpiler_error_t error = {
         .category = dyn_string_do_init(en_us[RES_SYNTAX_ERROR_CAT]),
-        .msg = dyn_string_do_join(2, expected, found),
+        .msg = msg,
         .pos = token.pos,
         .line = token.line,
         .filepath = ctx->filepath,

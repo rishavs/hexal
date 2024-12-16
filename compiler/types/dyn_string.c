@@ -57,30 +57,30 @@ Dyn_string_t dyn_string_do_get_substring(Dyn_string_t src, int64_t pos, int64_t 
 }
 
 // Format a string using the given format and arguments
-Dyn_string_t dyn_string_do_format (Dyn_string_t base_string, ...) {
-    va_list args;
+// Dyn_string_t dyn_string_do_format (Dyn_string_t base_string, ...) {
+//     va_list args;
 
-    // get the length of the formatted string
-    va_start(args, base_string);
-    size_t len = vsnprintf(NULL, 0, base_string.data, args) + 1;
-    va_end(args);
+//     // get the length of the formatted string
+//     va_start(args, base_string);
+//     size_t len = vsnprintf(NULL, 0, base_string.data, args) + 1;
+//     va_end(args);
 
-    // allocate memory for the formatted string
-    char* buffer = calloc(len, sizeof(char));
-    if (buffer == NULL) memory_allocation_failure(0, 0, NULL, __FILE__, __LINE__);
+//     // allocate memory for the formatted string
+//     char* buffer = calloc(len, sizeof(char));
+//     if (buffer == NULL) memory_allocation_failure(0, 0, NULL, __FILE__, __LINE__);
 
-    // format the string
-    va_start(args, base_string);
-    vsnprintf(buffer, len, base_string.data, args);
-    va_end(args);
+//     // format the string
+//     va_start(args, base_string);
+//     vsnprintf(buffer, len, base_string.data, args);
+//     va_end(args);
 
-    Dyn_string_t formatted_string;
-    formatted_string.len = len - 1;
-    formatted_string.capacity = len;
-    formatted_string.data = buffer;
+//     Dyn_string_t formatted_string;
+//     formatted_string.len = len - 1;
+//     formatted_string.capacity = len;
+//     formatted_string.data = buffer;
 
-    return formatted_string;
-}
+//     return formatted_string;
+// }
 
 // Compare two dynamic strings
 bool dyn_string_do_compare (Dyn_string_t str1, Dyn_string_t str2) {
@@ -103,36 +103,42 @@ bool dyn_string_do_starts_with(Dyn_string_t src, int64_t pos, Dyn_string_t frag)
 // Join a list of strings
 Dyn_string_t dyn_string_do_join(int n, ...) {
     if (n == 0) {
-        Dyn_string_t empty_string = { .data = NULL, .len = 0, .capacity = 0 };
-        return empty_string;
+        return (Dyn_string_t){ .data = NULL, .len = 0, .capacity = 0 };
     }
 
     va_list args;
     va_start(args, n);
 
+    // Calculate the total length of the concatenated string
     size_t total_len = 0;
     for (int i = 0; i < n; i++) {
         Dyn_string_t str = va_arg(args, Dyn_string_t);
-        if (str.data != NULL) {
+        if (str.data != NULL && str.len > 0) {
             total_len += str.len;
         }
     }
     va_end(args);
 
-    char* buffer = calloc(total_len, sizeof(char));
+    // Allocate memory for the result string
+    char* buffer = calloc(total_len + 1, sizeof(char)); // +1 for the null-terminator
     if (buffer == NULL) memory_allocation_failure(0, 0, NULL, __FILE__, __LINE__);
 
+    // Copy the strings into the buffer
     va_start(args, n);
+    size_t offset = 0;
     for (int i = 0; i < n; i++) {
         Dyn_string_t str = va_arg(args, Dyn_string_t);
-        if (str.data != NULL) {
-            strncat(buffer, str.data, str.len);
+        if (str.data != NULL && str.len > 0) {
+            memcpy(buffer + offset, str.data, str.len);
+            offset += str.len;
         }
     }
     va_end(args);
 
-    buffer[total_len] = '\0';       // likely not required. just to be safe
+    // Null-terminate the concatenated string
+    buffer[total_len] = '\0';
 
-    Dyn_string_t result = { .data = buffer, .len = total_len, .capacity = total_len + 1 };
-    return result;
+    // Return the resulting dynamic string
+    return (Dyn_string_t){ .data = buffer, .len = total_len, .capacity = total_len + 1 };
 }
+

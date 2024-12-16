@@ -109,7 +109,7 @@ void lex_file(Transpiler_ctx_t* ctx) {
                 pos++;
             }
             int64_t _ = list_of_tokens_do_push(&ctx->tokens, (Token_t) {
-                .kind = dyn_string_do_init("number"),
+                .kind = is_decimal ? dyn_string_do_init("decimal") : dyn_string_do_init("integer"),
                 .value = dyn_string_do_get_substring(ctx->src, anchor, pos - anchor),
                 .pos = anchor,
                 .line = line
@@ -120,9 +120,12 @@ void lex_file(Transpiler_ctx_t* ctx) {
         } else {
             c = ctx->src.data[pos];
             Dyn_string_t cat = dyn_string_do_init(en_us[RES_SYNTAX_ERROR_CAT]);
-            Dyn_string_t msg_unformatted = dyn_string_do_init(en_us[RES_ILLEGAL_CHAR_MSG]);
-            Dyn_string_t msg = dyn_string_do_format(msg_unformatted, c);
-
+            Dyn_string_t msg = dyn_string_do_join(3,
+                dyn_string_do_init(en_us[RES_ILLEGAL_CHAR_MSG]), 
+                dyn_string_do_get_substring(ctx->src, pos, 1),
+                dyn_string_do_init("\". ")
+            );
+            printf("msg: %s\n", msg.data);
             list_of_errors_do_push(&ctx->errors, (Transpiler_error_t) {
                 .category = cat,
                 .msg = msg,
