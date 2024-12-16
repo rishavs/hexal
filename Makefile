@@ -5,7 +5,12 @@ OUTPUT_EXECUTABLE = bin/hexal
 TEST_EXECUTABLE = bin/test
 MAIN_FILE = hexal.c
 TEST_FILE = spec/runner.c
-COMPILER_FLAGS = -fno-omit-frame-pointer #-fsanitize=address
+COMPILER_FLAGS = \
+	# -fno-omit-frame-pointer \
+	# -fsanitize=address \
+	# -fsanitize=leak \
+	# -fsanitize=bounds-strict 
+
 COMPILER_WARNINGS = -Wall -Wextra -Wno-unused-variable -Wno-unused-parameter
 INCLUDES = -I$(HEADERS_FOLDER)
 
@@ -13,6 +18,7 @@ SOURCE_FILES = \
 	compiler/errors.c \
 	compiler/types/dyn_string.c \
 	compiler/lexer.c \
+	compiler/parser.c \
 	compiler/transpiler.c
 # 	src/transpiler/helpers.c \
 # 	src/transpiler/context.c \

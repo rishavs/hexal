@@ -38,7 +38,6 @@ void lex_file(Transpiler_ctx_t* ctx) {
                 .kind = dyn_string_do_init("="),
                 .value = dyn_string_do_init("="),
                 .pos = pos,
-                .len = 1,
                 .line = line
             });
             // add_token_to_context(ctx, TOKEN_ASSIGN, pos, 1, line);
@@ -68,12 +67,11 @@ void lex_file(Transpiler_ctx_t* ctx) {
 
             Dyn_string_t value = dyn_string_do_get_substring(ctx->src, anchor, pos - anchor);
 
-            if (dyn_string_do_compare(value, dyn_string_do_init("var"))) {
+            if (dyn_string_do_compare(value, dyn_string_do_init("let"))) {
                 int64_t _ = list_of_tokens_do_push(&ctx->tokens, (Token_t) {
-                    .kind = dyn_string_do_init("var"),
+                    .kind = dyn_string_do_init("let"),
                     .value = value,
                     .pos = anchor,
-                    .len = pos - anchor,
                     .line = line
                 });
             } else {
@@ -81,7 +79,6 @@ void lex_file(Transpiler_ctx_t* ctx) {
                     .kind = dyn_string_do_init("identifier"),
                     .value = value,
                     .pos = anchor,
-                    .len = pos - anchor,
                     .line = line
                 });
             }
@@ -115,7 +112,6 @@ void lex_file(Transpiler_ctx_t* ctx) {
                 .kind = dyn_string_do_init("number"),
                 .value = dyn_string_do_get_substring(ctx->src, anchor, pos - anchor),
                 .pos = anchor,
-                .len = pos - anchor,
                 .line = line
             });
 

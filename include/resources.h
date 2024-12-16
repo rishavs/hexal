@@ -52,7 +52,7 @@ static char* en_us[RES_RESOURCE_COUNT] = {
     [RES_UNHANDLED_ERROR_CAT]   = "Unhandled Failure!",
     [RES_SYNTAX_ERROR_CAT]      = "Malformed Syntax!",
 
-    [RES_MEMORY_FAILURE_MSG]    = "Failed to allocate dmemory during compilation",
+    [RES_MEMORY_FAILURE_MSG]    = "Failed to allocate memory during compilation",
     [RES_UNHANDLED_ERROR_MSG]   = "This is likely not a bug in your code, but in the compiler! Please report with minimal reproducible code.",
     
     [RES_ILLEGAL_CHAR_MSG]      = "Found illegal character \"%c\", ",

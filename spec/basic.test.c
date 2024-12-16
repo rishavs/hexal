@@ -1,5 +1,4 @@
 #include <stdbool.h>
-#include <string.h>
 
 #include "dyn_string.h"
 #include "errors.h"
@@ -35,7 +34,7 @@ Test_Result simple_var_declaration_as_int() {
     // Transpile the source
     Transpiler_ctx_t* ctx = transpiler_ctx_do_init(
         dyn_string_do_init("specs/basic.test.c"),
-        dyn_string_do_init("var x = 3\n var y = 13")
+        dyn_string_do_init("let x = 3\n let y = 13")
     );
     
     transpile_file(ctx);

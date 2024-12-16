@@ -20,5 +20,6 @@ Dyn_string_t dyn_string_do_format (Dyn_string_t base_string, ...);
 bool dyn_string_do_compare (Dyn_string_t str1, Dyn_string_t str2);
 bool dyn_string_do_starts_with(Dyn_string_t src, int64_t pos, Dyn_string_t frag);
 Dyn_string_t dyn_string_do_join(int n, ...);
+Dyn_string_t dyn_string_do_copy(Dyn_string_t src);
 
 #endif // DYN_STRING_H
