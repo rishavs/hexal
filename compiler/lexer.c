@@ -1,7 +1,6 @@
 #include <stdbool.h>
 #include <stdint.h>
 
-#include "resources.h"
 #include "dyn_string.h"
 #include "errors.h"
 #include "transpiler.h"
@@ -119,13 +118,12 @@ void lex_file(Transpiler_ctx_t* ctx) {
         // Handle illegal characters
         } else {
             c = ctx->src.data[pos];
-            Dyn_string_t cat = dyn_string_do_init(en_us[RES_SYNTAX_ERROR_CAT]);
+            Dyn_string_t cat = dyn_string_do_init("[ ERROR ] Malformed Syntax!");
             Dyn_string_t msg = dyn_string_do_join(3,
-                dyn_string_do_init(en_us[RES_ILLEGAL_CHAR_MSG]), 
+                dyn_string_do_init("Found illegal character \""), 
                 dyn_string_do_get_substring(ctx->src, pos, 1),
                 dyn_string_do_init("\". ")
             );
-            printf("msg: %s\n", msg.data);
             list_of_errors_do_push(&ctx->errors, (Transpiler_error_t) {
                 .category = cat,
                 .msg = msg,

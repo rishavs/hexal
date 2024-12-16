@@ -1,6 +1,5 @@
 #include <stdint.h> 
 
-#include "resources.h"
 #include "errors.h"
 #include "dyn_string.h"
 #include "transpiler.h"
@@ -62,18 +61,23 @@ int64_t list_of_errors_do_push(List_of_errors_t* list, Transpiler_error_t error)
 void parser_expected_syntax_error(Transpiler_ctx_t* ctx, Dyn_string_t expected_syntax, int64_t at, Dyn_string_t transpiler_file, int64_t transpiler_line) {
     Token_t token = ctx->tokens.data[at];
 
+    // [RES_EXPECTED]              = "Expected %s, ",
+    // [RES_FOUND_X]               = "but found \"%s\". ",
+    // [RES_REACHED_EOS]           = "but instead reached end of source.",
+
     Dyn_string_t found;
     if (at >= ctx->tokens.len) {
-        found = dyn_string_do_init(en_us[RES_REACHED_EOS]);
+        found = dyn_string_do_init("but instead reached end of source.");
     } else {
-        found = dyn_string_do_join(2,
-            dyn_string_do_init(en_us[RES_FOUND_X]), 
-            token.value
+        found = dyn_string_do_join(3,
+            dyn_string_do_init("but instead found \""), 
+            token.value,
+            dyn_string_do_init("\". ")
         );
     }
 
     Dyn_string_t msg = dyn_string_do_join(5, 
-        dyn_string_do_init(en_us[RES_EXPECTED]), 
+        dyn_string_do_init("Expected "), 
         expected_syntax,
         dyn_string_do_init(", "), 
         found,
@@ -81,7 +85,7 @@ void parser_expected_syntax_error(Transpiler_ctx_t* ctx, Dyn_string_t expected_s
     );
     printf("%s\n", msg.data);
     Transpiler_error_t error = {
-        .category = dyn_string_do_init(en_us[RES_SYNTAX_ERROR_CAT]),
+        .category = dyn_string_do_init("[ ERROR ] Malformed Syntax!"),
         .msg = msg,
         .pos = token.pos,
         .line = token.line,
