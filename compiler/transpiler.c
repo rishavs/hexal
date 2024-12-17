@@ -61,10 +61,6 @@ int64_t list_of_errors_do_push(List_of_errors_t* list, Transpiler_error_t error)
 void parser_expected_syntax_error(Transpiler_ctx_t* ctx, Dyn_string_t expected_syntax, int64_t at, Dyn_string_t transpiler_file, int64_t transpiler_line) {
     Token_t token = ctx->tokens.data[at];
 
-    // [RES_EXPECTED]              = "Expected %s, ",
-    // [RES_FOUND_X]               = "but found \"%s\". ",
-    // [RES_REACHED_EOS]           = "but instead reached end of source.",
-
     Dyn_string_t found;
     if (at >= ctx->tokens.len) {
         found = dyn_string_do_init("but instead reached end of source.");
@@ -94,6 +90,22 @@ void parser_expected_syntax_error(Transpiler_ctx_t* ctx, Dyn_string_t expected_s
         .transpiler_line = transpiler_line
     };
     list_of_errors_do_push(&ctx->errors, error);
+}
+
+void unhandled_transpiler_error(Transpiler_ctx_t* ctx, int64_t at, Dyn_string_t transpiler_file, int64_t transpiler_line){
+    Node_t* node = &ctx->nodes.data[at];
+
+    Transpiler_error_t error = {
+        .category = dyn_string_do_init("[ ERROR ] Unhandled Error!"),
+        .msg = dyn_string_do_init("This is likely not a bug in your code, but in the compiler! Please report with minimal reproducible code."),
+        .pos = node->pos,
+        .line = node->line,
+        .filepath = ctx->filepath,
+        .transpiler_file = transpiler_file,
+        .transpiler_line = transpiler_line
+    };
+    list_of_errors_do_push(&ctx->errors, error);
+
 }
 
 // void parser_expected_syntax_error(Transpiler_context_t* ctx, const char* expected_syntax, const char* transpiler_file, const size_t transpiler_line) {
@@ -179,10 +191,12 @@ void transpile_file(Transpiler_ctx_t* ctx){
         printf("%s\n", node.kind.data);
     }
 
-    // create dummy output
-    ctx->c_code = dyn_string_do_init("int main() {\n    return 0;\n}\n");
-    ctx->h_file = dyn_string_do_init("#ifndef __TEST_H__\n#define __TEST_H__\n\n#endif\n");
-    
+    // run the codegen
+    gen_code(ctx);
+
+    // print the generated code
+    printf("H Code: %s\n", ctx->h_code.data);
+    printf("C Code: %s\n", ctx->c_code.data);
 
     // print the errors
     for (int i = 0; i < ctx->errors.len; i++) {

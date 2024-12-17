@@ -56,6 +56,8 @@ int64_t parse_expression (Transpiler_ctx_t* ctx, int64_t* i) {
 
     if (dyn_string_do_compare(token.kind, dyn_string_do_init("integer"))) {
         return parse_integer(ctx, i);
+    } else if (dyn_string_do_compare(token.kind, dyn_string_do_init("identifier"))) {
+        return parse_identifier(ctx, i);
     }
 
     // if no expression found, raise error

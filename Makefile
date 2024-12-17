@@ -19,6 +19,7 @@ SOURCE_FILES = \
 	compiler/types/dyn_string.c \
 	compiler/lexer.c \
 	compiler/parser.c \
+	compiler/codegen.c \
 	compiler/transpiler.c
 # 	src/transpiler/helpers.c \
 # 	src/transpiler/context.c \

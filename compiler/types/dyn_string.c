@@ -142,3 +142,23 @@ Dyn_string_t dyn_string_do_join(int n, ...) {
     return (Dyn_string_t){ .data = buffer, .len = total_len, .capacity = total_len + 1 };
 }
 
+Dyn_string_t dyn_string_do_char_to_string (char c) {
+    Dyn_string_t str;
+    str.len = 2;
+    str.capacity = 2;
+    str.data = calloc(2, sizeof(char));
+    if (str.data == NULL) memory_allocation_failure(0, 0, NULL, __FILE__, __LINE__);
+
+    str.data[0] = c;
+    str.data[1] = '\0';
+
+    return str;
+}
+
+Dyn_string_t dyn_string_do_int_to_string (int64_t num) {
+    char buffer[21]; // 1 char for -, 19 for int64 & 1 for null terminator
+    snprintf(buffer, 21, "%lld", num);
+
+    return dyn_string_do_init(buffer);
+}
+

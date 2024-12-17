@@ -103,18 +103,27 @@ typedef struct {
         
     // codegen
     Dyn_string_t c_code;
-    Dyn_string_t h_file;
+    Dyn_string_t h_code;
     
-    // char* src;
-    // char* c_code;
-    // char* h_file;
+    // Header flags
+    bool has_integer;
+    bool has_string;
+    bool has_list;
+    bool has_dict;
+
+    // Other flags
+    bool has_error;
+
 } Transpiler_ctx_t;
 Transpiler_ctx_t* transpiler_ctx_do_init(Dyn_string_t filepath, Dyn_string_t src);
 
 void parser_expected_syntax_error(Transpiler_ctx_t* ctx, Dyn_string_t expected_syntax, int64_t at, Dyn_string_t transpiler_file, int64_t transpiler_line);
+void unhandled_transpiler_error(Transpiler_ctx_t* ctx, int64_t at, Dyn_string_t transpiler_file, int64_t transpiler_line);
 
 void lex_file(Transpiler_ctx_t* ctx);
 void parse_file(Transpiler_ctx_t* ctx);
 void transpile_file(Transpiler_ctx_t* ctx);
+void gen_code(Transpiler_ctx_t* ctx);
+
 
 #endif // HEXAL_TRANSPILER_H
