@@ -110,7 +110,7 @@ Dyn_string_t dyn_string_do_join(int n, ...) {
     va_start(args, n);
 
     // Calculate the total length of the concatenated string
-    size_t total_len = 0;
+    int64_t total_len = 0;
     for (int i = 0; i < n; i++) {
         Dyn_string_t str = va_arg(args, Dyn_string_t);
         if (str.data != NULL && str.len > 0) {
@@ -125,7 +125,7 @@ Dyn_string_t dyn_string_do_join(int n, ...) {
 
     // Copy the strings into the buffer
     va_start(args, n);
-    size_t offset = 0;
+    int64_t offset = 0;
     for (int i = 0; i < n; i++) {
         Dyn_string_t str = va_arg(args, Dyn_string_t);
         if (str.data != NULL && str.len > 0) {

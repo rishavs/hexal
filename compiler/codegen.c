@@ -57,33 +57,44 @@ Dyn_string_t gen_expression(Transpiler_ctx_t* ctx, int64_t* i) {
 }
 
 Dyn_string_t gen_declaration(Transpiler_ctx_t* ctx, int64_t* i) {
+    printf("Generating declaration\n");
     Node_t* node = &ctx->nodes.data[*i];
     int64_t identifier_index = node->Declaration_data.identifier_i;
     int64_t expression_index = node->Declaration_data.expression_i;
 
+    Dyn_string_t identifier_str = gen_identifier(ctx, &identifier_index);
+    Dyn_string_t expression_str = gen_expression(ctx, &expression_index);
+
+    printf("Identifier: %s\n", identifier_str.data);
+    printf("Expression: %s\n", expression_str.data);
+
     Dyn_string_t code = dyn_string_do_join(6,
         indent(ctx, i),
         dyn_string_do_init("int64_t "),
-        gen_identifier(ctx, &identifier_index),
+        identifier_str,
         dyn_string_do_init(" = "),
-        gen_expression(ctx, &expression_index),
+        expression_str,
         dyn_string_do_init(";\n")
     );
+
+    printf("Declaration code: %s\n", code.data);
 
     return code;
 }
 
-Dyn_string_t gen_statements(Transpiler_ctx_t* ctx, int64_t* i) {
+Dyn_string_t gen_block(Transpiler_ctx_t* ctx, int64_t* i) {
+    printf("Generating block\n");
     Node_t* node = &ctx->nodes.data[*i];
-    List_of_ints_t statements = node->Program_data.statements;
+    printf("Block kind: %s\n", node->kind.data);
+    List_of_ints_t statements = node->Block_data.statements;
 
     Dyn_string_t code = dyn_string_do_init("");
 
     int64_t statement_index;
-
     for (int64_t j = 0; j < statements.len; j++) {
-        printf("Statement index: %lld\n", statement_index);
+        printf("Statement %lld\n", j);
         statement_index = statements.data[j];
+        printf("Statement index: %lld\n", statement_index);
         if (statement_index >= ctx->nodes.len) {
             printf("Statement index out of bounds: %lld\n", statement_index);
         }
@@ -97,6 +108,18 @@ Dyn_string_t gen_statements(Transpiler_ctx_t* ctx, int64_t* i) {
             printf("Unhandled statement kind: %s\n", ctx->nodes.data[statement_index].kind.data);
         }
     }
+
+    return code;
+}
+
+Dyn_string_t gen_program(Transpiler_ctx_t* ctx, int64_t* i) {
+    Node_t* node = &ctx->nodes.data[*i];
+    printf("Program kind: %s\n", node->kind.data);
+    int64_t block_i = node->Program_data.block_i;
+
+    printf("Block index: %lld\n", node->Program_data.block_i);
+
+    Dyn_string_t code = gen_block(ctx, &block_i);
 
     return code;
 }
@@ -118,7 +141,7 @@ Dyn_string_t gen_c_code(Transpiler_ctx_t* ctx, int64_t* i) {
     Dyn_string_t code = dyn_string_do_join(4, 
         imports,
         dyn_string_do_init("int main() {\n"),
-        gen_statements(ctx, i),
+        gen_program(ctx, i),
         dyn_string_do_init("\n    return 0\n}")
     );
 
@@ -128,7 +151,7 @@ Dyn_string_t gen_c_code(Transpiler_ctx_t* ctx, int64_t* i) {
 
 void gen_code(Transpiler_ctx_t* ctx) {
     // reset cursor. Start from 1, as we don't need the program node
-    int64_t i = 1;
+    int64_t i = 0;
     ctx->has_error = false;
 
     ctx->c_code = gen_c_code(ctx, &i);

@@ -170,6 +170,57 @@ int64_t list_of_ints_do_push(List_of_ints_t* list, int64_t item) {
 //     return at;
 // }
 
+void print_ast_node(Node_t* node, int64_t depth) {
+    for (int64_t i = 0; i < depth; i++) {
+        printf("  ");
+    }
+    printf("Node kind: %s\n", node->kind.data);
+    for (int64_t i = 0; i < depth; i++) {
+        printf("  ");
+    }
+    printf("Position: %lld, Line: %lld, Scope Depth: %lld, Root Distance: %lld\n", node->pos, node->line, node->scope_depth, node->root_distance);
+    for (int64_t i = 0; i < depth; i++) {
+        printf("  ");
+    }
+    printf("Parent Index: %lld, Scope Owner Index: %lld\n", node->parent_i, node->scope_owner_i);
+
+    if (dyn_string_do_compare(node->kind, dyn_string_do_init("integer"))) {
+        for (int64_t i = 0; i < depth; i++) {
+            printf("  ");
+        }
+        printf("Integer Value: %s\n", node->Integer_data.value.data);
+    } else if (dyn_string_do_compare(node->kind, dyn_string_do_init("identifier"))) {
+        for (int64_t i = 0; i < depth; i++) {
+            printf("  ");
+        }
+        printf("Identifier Value: %s\n", node->Identifier_data.value.data);
+    } else if (dyn_string_do_compare(node->kind, dyn_string_do_init("declaration"))) {
+        for (int64_t i = 0; i < depth; i++) {
+            printf("  ");
+        }
+        printf("Declaration Identifier Index: %lld, Expression Index: %lld\n", node->Declaration_data.identifier_i, node->Declaration_data.expression_i);
+    } else if (dyn_string_do_compare(node->kind, dyn_string_do_init("block"))) {
+        for (int64_t i = 0; i < depth; i++) {
+            printf("  ");
+        }
+        printf("Block Statements Length: %lld\n", node->Block_data.statements.len);
+    } else if (dyn_string_do_compare(node->kind, dyn_string_do_init("program"))) {
+        for (int64_t i = 0; i < depth; i++) {
+            printf("  ");
+        }
+        printf("Program Block Index: %lld\n", node->Program_data.block_i);
+    }
+}
+
+void print_ast(Transpiler_ctx_t* ctx) {
+    for (int64_t i = 0; i < ctx->nodes.len; i++) {
+        printf("Node Index: %lld\n", i);
+        print_ast_node(&ctx->nodes.data[i], 0);
+        printf("\n");
+    }
+}
+
+
 void transpile_file(Transpiler_ctx_t* ctx){
 
     // Run the lexer
@@ -185,18 +236,16 @@ void transpile_file(Transpiler_ctx_t* ctx){
     // run the parser
     parse_file(ctx);
 
-    // print the nodes
-    for (int i = 0; i < ctx->nodes.len; i++) {
-        Node_t node = ctx->nodes.data[i];
-        printf("%s\n", node.kind.data);
-    }
+    // print the nodes in a tree format
+    print_ast(ctx);
+    
 
     // run the codegen
     gen_code(ctx);
 
     // print the generated code
     printf("H Code: %s\n", ctx->h_code.data);
-    printf("C Code: %s\n", ctx->c_code.data);
+    printf("C Code: \n%s\n", ctx->c_code.data);
 
     // print the errors
     for (int i = 0; i < ctx->errors.len; i++) {

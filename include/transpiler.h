@@ -76,7 +76,8 @@ typedef struct Node_t {
         // struct { int64_t identifier_index; int64_t expression_index; } Reassignment_data;
         struct { int64_t identifier_i; int64_t expression_i; } Declaration_data;
         // struct { struct Node *expr; } Node_Return;
-        struct { List_of_ints_t statements;} Program_data;
+        struct { List_of_ints_t statements;} Block_data;
+        struct { int64_t block_i;} Program_data;
     };
 } Node_t;
 typedef struct {

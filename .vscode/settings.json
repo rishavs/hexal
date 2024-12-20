@@ -2,5 +2,12 @@
     "files.associations": {
         ".fantomasignore": "ignore",
         "error.h": "c"
-    }
+    },
+    "makefile.launchConfigurations": [
+        {
+            "cwd": "c:\\Users\\risharan\\Documents\\GitHub\\hexal\\bin",
+            "binaryPath": "c:\\Users\\risharan\\Documents\\GitHub\\hexal\\bin\\test.exe",
+            "binaryArgs": []
+        }
+    ]
 }

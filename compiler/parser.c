@@ -137,18 +137,26 @@ void recover_from_parsing_error(Transpiler_ctx_t* ctx, int64_t* i) {
     }
 }
 
-List_of_ints_t parse_statements (Transpiler_ctx_t* ctx, int64_t* i) {
+int64_t parse_block (Transpiler_ctx_t* ctx, int64_t* i) {
     // Get the current token
     Token_t token = ctx->tokens.data[*i];
 
-    List_of_ints_t statements_list;
-    statements_list.len = 0;
-    statements_list.capacity = 8;
-    statements_list.data = calloc(statements_list.capacity, sizeof(int64_t));
-    if (statements_list.data == NULL) memory_allocation_failure(token.pos, token.line, NULL, __FILE__, __LINE__);
+    // Create the Block node. Note - each block is a scope and will have a +1 scope depth
+    int64_t index = list_of_nodes_do_push(&ctx->nodes, (Node_t) {
+        .kind = dyn_string_do_init("block"),
+        .pos = token.pos,
+        .line = token.line,
+    });
 
+    Node_t* block_node = &ctx->nodes.data[index];
+    block_node->Block_data.statements.len = 0;
+    block_node->Block_data.statements.capacity = 8;
+    block_node->Block_data.statements.data = calloc(block_node->Block_data.statements.capacity, sizeof(int64_t));
+    if (block_node->Block_data.statements.data == NULL) memory_allocation_failure(token.pos, token.line, NULL, __FILE__, __LINE__);
 
+    // Parse the statements
     int64_t statement_index;
+    Node_t* statement_node;
     while (*i < ctx->tokens.len) {
         
         if (dyn_string_do_compare(token.kind, dyn_string_do_init("let"))) {
@@ -164,11 +172,20 @@ List_of_ints_t parse_statements (Transpiler_ctx_t* ctx, int64_t* i) {
         if (statement_index == -1) {
             recover_from_parsing_error(ctx, i);
         } else {
-            list_of_ints_do_push(&statements_list, statement_index);
+            list_of_ints_do_push(&block_node->Block_data.statements, statement_index);
+
+            // update the children nodes
+            statement_node = &ctx->nodes.data[statement_index];
+            statement_node->parent_i= index;
+            statement_node->scope_depth = block_node->scope_depth;
+            statement_node->scope_owner_i= block_node->scope_owner_i;
+            statement_node->root_distance = block_node->root_distance + 1;
         }
     }
 
-    return statements_list;
+    printf("Parser added block at index %lld\n", index);
+
+    return index;
 }
 
 int64_t parse_program (Transpiler_ctx_t* ctx, int64_t* i) {
@@ -187,17 +204,16 @@ int64_t parse_program (Transpiler_ctx_t* ctx, int64_t* i) {
     Node_t* program_node = &ctx->nodes.data[index];
 
     // Parse the statements
-    program_node->Program_data.statements = parse_statements(ctx, i);
-
+    // int64_t block_i = parse_block(ctx, i);
+    // if (block_i == -1) return -1; // not required as we do recovery in parse_block
+    program_node->Program_data.block_i = parse_block(ctx, i);;
+    
     // update the children nodes
-    for (int64_t j = 0; j < program_node->Program_data.statements.len; j++) {
-        int64_t statement_index = program_node->Program_data.statements.data[j];
-        Node_t* statement_node = &ctx->nodes.data[statement_index];
-        statement_node->parent_i= index;
-        statement_node->scope_depth = program_node->scope_depth;
-        statement_node->scope_owner_i= program_node->scope_owner_i;
-        statement_node->root_distance = program_node->root_distance + 1;
-    }
+    Node_t* block_node = &ctx->nodes.data[program_node->Program_data.block_i];
+    block_node->parent_i = index;
+    block_node->scope_depth = 0;
+    block_node->scope_owner_i = index;
+    block_node->root_distance = 0;
 
     return index;
 }
